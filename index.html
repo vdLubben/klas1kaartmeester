@@ -948,7 +948,122 @@
             background: rgba(15, 23, 42, 0.9);
             margin-top: auto;
         }
+    
+        /* FIXED PDF MODAL & BACKDROP STYLES */
+        .pdf-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(15, 23, 42, 0.85) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
+            z-index: 99998 !important;
+            display: none;
+        }
+        .pdf-backdrop.show {
+            display: block !important;
+        }
+
+        #pdf-modal {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) scale(1) !important;
+            background: #0f172a !important;
+            border: 2px solid var(--accent-cyan) !important;
+            box-shadow: 0 0 40px rgba(6, 182, 212, 0.5), 0 20px 50px rgba(0,0,0,0.9) !important;
+            border-radius: var(--radius-lg) !important;
+            padding: 1.75rem !important;
+            max-width: 480px !important;
+            width: 92% !important;
+            z-index: 99999 !important;
+            display: none;
+            opacity: 1 !important;
+            visibility: visible !important;
+            color: #f8fafc !important;
+        }
+        #pdf-modal.show {
+            display: block !important;
+        }
+
+    
+        
+        
+        
+  @media print {
+  /* 1. Verberg navigatie, knoppen, tabs-balk en dubbel print-sheet onderaan */
+  nav, header, footer, .nav-tabs, .next-btn, button, #downloadPdfBtn, #print-sheet {
+    display: none !important;
+  }
+
+  /* 2. Maak ALLE tabbladen, opdrachten en secties zichtbaar */
+  .tab-content, .tab-pane, .section, .opdracht, .step-content, [class*="tab"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* 3. Zorg dat ingevulde antwoorden goed leesbaar zijn */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  input, textarea, select {
+    border: 1px solid #999 !important;
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+
+  /* 4. Voorkom dat opdrachten midden op een pagina worden afgesneden */
+  .card, .opdracht-card, fieldset {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 2rem !important;
+  }
+}
     </style>
+
+<script>
+    function switchTab(tabId, btnElement) {
+        try {
+            var allTabs = document.querySelectorAll('.tab-content');
+            for (var i = 0; i < allTabs.length; i++) {
+                allTabs[i].classList.remove('active');
+                allTabs[i].style.display = 'none';
+            }
+
+            var allBtns = document.querySelectorAll('.nav-btn');
+            for (var j = 0; j < allBtns.length; j++) {
+                allBtns[j].classList.remove('active');
+            }
+
+            var targetTab = document.getElementById('tab-' + tabId);
+            if (targetTab) {
+                targetTab.classList.add('active');
+                targetTab.style.display = 'block';
+            }
+
+            var targetBtn = btnElement;
+            if (!targetBtn || !targetBtn.classList) {
+                targetBtn = document.querySelector('.nav-btn[data-tab="' + tabId + '"]');
+            }
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch(e) {
+            console.error('Error switching tab:', e);
+        }
+    }
+    window.switchTab = switchTab;
+</script>
+
 </head>
 <body>
 
@@ -1182,7 +1297,7 @@
                         </div>
 
                         <div style="margin-top: 0.5rem;">
-                            <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">X-Ray Element Highlighter:</label>
+                            <span style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">X-Ray Element Highlighter:</span>
                             <div class="xray-btn-grid">
                                 <button class="xray-toggle-btn" onclick="toggleXray('title', this)">
                                     📌 Highlight Titel
@@ -1328,7 +1443,7 @@
                         <h3 style="color: var(--accent-cyan); margin-bottom: 1rem;">Bereken Werkelijke Afstand</h3>
                         
                         <div class="input-group">
-                            <label>Kies of typ de Schaal (1 : N):</label>
+                            <label for="calc-scale-preset">Kies of typ de Schaal (1 : N):</label>
                             <select id="calc-scale-preset" class="input-field" onchange="updateScalePreset()" style="margin-bottom: 0.5rem;">
                                 <option value="40000">1 : 40.000 (Topografische Kaart Dieren)</option>
                                 <option value="100000">1 : 100.000 (Regionale Topografie)</option>
@@ -1340,7 +1455,7 @@
                         </div>
 
                         <div class="input-group">
-                            <label>Gemeten afstand op de kaart (in cm):</label>
+                            <label for="calc-cm-val">Gemeten afstand op de kaart (in cm):</label>
                             <input type="number" id="calc-cm-val" class="input-field" value="5" step="0.1" placeholder="bijv. 5" oninput="calculateScale()">
                         </div>
 
@@ -1676,9 +1791,7 @@
                     <button class="next-btn" onclick="checkAtlasAnswers()" style="font-size: 1.1rem; padding: 0.9rem 2.2rem; background: linear-gradient(135deg, var(--accent-emerald), #059669);">
                         ✅ Controleer Antwoorden
                     </button>
-                    <button class="next-btn" onclick="openPdfModal()" style="font-size: 1.1rem; padding: 0.9rem 2.2rem; background: linear-gradient(135deg, var(--accent-cyan), #0891b2);">
-                        📄 📄 Download Alle Resultaten & Antwoorden (PDF)
-                    </button>
+                    <button type="button" class="next-btn" onclick="prepareAndPrint()">Download PDF</button>
                 </div>
                 
                 <div id="atlas-overall-feedback" style="margin-top: 1.5rem; display: none; padding: 1.5rem; border-radius: var(--radius-md); text-align: center; animation: fadeIn 0.4s ease;">
@@ -1689,7 +1802,7 @@
     </main>
 
     <footer>
-        KaartMeester • Ontwikkeld voor Aardrijkskunde Brugklas (Kaartvaardigheden B15, B16, B18 & B20)
+        KaartMeester • Ontwikkeld voor Aardrijkskunde Brugklas ontwikkeld door Meneer van der Lubben
     </footer>
 
     <!-- PDF EXPORT MODAL -->
@@ -1798,25 +1911,38 @@
         let currentMapKey = 'canada_bevolking';
         let activeXrayMode = null;
 
-        // TAB SWITCHING
+                // TAB SWITCHING
         function switchTab(tabId, btnElement) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            
-            const targetTab = document.getElementById(`tab-${tabId}`);
-            if (targetTab) {
-                targetTab.classList.add('active');
+            try {
+                const allTabs = document.querySelectorAll('.tab-content');
+                allTabs.forEach(tab => {
+                    tab.classList.remove('active');
+                    tab.style.display = 'none';
+                });
+
+                const allBtns = document.querySelectorAll('.nav-btn');
+                allBtns.forEach(btn => btn.classList.remove('active'));
+
+                const targetTab = document.getElementById('tab-' + tabId);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                    targetTab.style.display = 'block';
+                }
+
+                let targetBtn = btnElement;
+                if (!targetBtn || !targetBtn.classList) {
+                    targetBtn = document.querySelector('.nav-btn[data-tab="' + tabId + '"]');
+                }
+                if (targetBtn) {
+                    targetBtn.classList.add('active');
+                }
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch(e) {
+                console.error('Error switching tab:', e);
             }
-            
-            if (btnElement) {
-                btnElement.classList.add('active');
-            } else {
-                const btn = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
-                if (btn) btn.classList.add('active');
-            }
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        window.switchTab = switchTab;
 
         // MAP INSPECTOR LOGIC
         function loadMap(mapKey, btnElement) {
@@ -1984,7 +2110,7 @@
                     "Noordpijl, Kleuren, Cijfers en Stippen"
                 ],
                 answer: 0, // A
-                explanation: "Klopt helemaal! Volgens B15 heeft een goede kaart altijd een titel, legenda, schaal en een noordpijl/windroos."
+                explanation: "Volgens B15 heeft een goede kaart altijd een titel, legenda, schaal en een noordpijl/windroos."
             },
             {
                 level: 1,
@@ -1996,7 +2122,7 @@
                     "Een anamorfosekaart"
                 ],
                 answer: 2, // C
-                explanation: "Juist! Een natuurkundige overzichtskaart (B16) laat vooral natuurlijke kenmerken zien, zoals hoogteligging, rivieren en bergen."
+                explanation: "Een natuurkundige overzichtskaart (B16) laat vooral natuurlijke kenmerken zien, zoals hoogteligging, rivieren en bergen."
             },
 
             // LEVEL 2: KAARTANALYSE & SCHAAL (B18 & B20)
@@ -2010,7 +2136,7 @@
                     "Een navigatiekaart"
                 ],
                 answer: 1, // B
-                explanation: "Helemaal juist! Een thematische kaart (B18) gaat altijd over één specifiek onderwerp (thema). In dit voorbeeld is het thema landbouw."
+                explanation: "Een thematische kaart (B18) gaat altijd over één specifiek onderwerp (thema). In dit voorbeeld is het thema landbouw."
             },
             {
                 level: 2,
@@ -2022,7 +2148,7 @@
                     "2.000 meter (2 km)"
                 ],
                 answer: 3, // D
-                explanation: "Goed rekenwerk! 5 cm × 40.000 = 200.000 cm = 2.000 meter = 2 kilometer."
+                explanation: "5 cm × 40.000 = 200.000 cm = 2.000 meter = 2 kilometer."
             },
 
             // LEVEL 3: KAARTINTERPRETATIE & VERBANDEN (B20)
@@ -2036,7 +2162,7 @@
                     "In het binnenland mag je van de overheid niet bouwen"
                 ],
                 answer: 2, // C
-                explanation: "Super! Bij kaartinterpretatie zoek je naar de verklaring: extreme droogte (Australië) en extreem koude poolklimaten (Noord-Canada) maken wonen en landbouw onmogelijk."
+                explanation: "Bij kaartinterpretatie zoek je naar de verklaring: extreme droogte (Australië) en extreem koude poolklimaten (Noord-Canada) maken wonen en landbouw onmogelijk."
             },
             {
                 level: 3,
@@ -2048,7 +2174,7 @@
                     "Kaartanalyse (Verbanden leggen)"
                 ],
                 answer: 3, // D
-                explanation: "Helemaal juist! Bij kaartanalyse orden je de gegevens: je herkent patronen en legt verbanden tussen verschillende kaarten."
+                explanation: "Bij kaartanalyse orden je de gegevens: je herkent patronen en legt verbanden tussen verschillende kaarten."
             }
         ];
 
@@ -2275,158 +2401,195 @@
         }
 
         // PDF MODAL HANDLERS & GENERATION
+        // PDF MODAL HANDLERS
         function openPdfModal() {
             const modal = document.getElementById('pdf-modal');
-            if (modal) {
-                modal.style.display = 'flex';
+            let backdrop = document.getElementById('pdf-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'pdf-backdrop';
+                backdrop.className = 'pdf-backdrop';
+                backdrop.onclick = closePdfModal;
+                document.body.appendChild(backdrop);
             }
+            if (modal) {
+                modal.classList.add('show');
+                modal.style.display = 'block';
+            }
+            backdrop.classList.add('show');
         }
 
         function closePdfModal() {
             const modal = document.getElementById('pdf-modal');
+            const backdrop = document.getElementById('pdf-backdrop');
             if (modal) {
+                modal.classList.remove('show');
                 modal.style.display = 'none';
             }
+            if (backdrop) {
+                backdrop.classList.remove('show');
+            }
         }
 
-        function generatePDF() {
-            const name = document.getElementById('pdf-student-name').value.trim() || 'Onbekend';
-            const studentClass = document.getElementById('pdf-student-class').value.trim() || 'Onbekend';
+        function prepareAndPrint() {
+  // Kopieer getypte tekst naar het value-attribuut zodat de browserprint het pakt
+  document.querySelectorAll('input, textarea').forEach(el => {
+    el.setAttribute('value', el.value);
+    if (el.tagName.toLowerCase() === 'textarea') {
+      el.textContent = el.value;
+    }
+  });
+  window.print();
+}
 
-            // Gather inputs
-            const p1 = document.getElementById('compare-student-patroon')?.value || '(Niet ingevuld)';
-            const p2 = document.getElementById('compare-student-verband')?.value || '(Niet ingevuld)';
-            const p3 = document.getElementById('compare-student-verklaring')?.value || '(Niet ingevuld)';
+function generatePDF() {
+            try {
+                const getVal = (id, defaultVal = "") => {
+                    const el = document.getElementById(id);
+                    if (!el) return defaultVal;
+                    const val = el.value ? el.value.trim() : (el.innerText ? el.innerText.trim() : "");
+                    return val !== "" ? val : defaultVal;
+                };
 
-            const a1 = document.getElementById('atlas-q1')?.value || '(Niet ingevuld)';
-            const a2 = document.getElementById('atlas-q2')?.value || '(Niet ingevuld)';
-            const a3 = document.getElementById('atlas-q3')?.value || '(Niet ingevuld)';
-            const a4 = document.getElementById('atlas-q4')?.value || '(Niet ingevuld)';
-            const a5 = document.getElementById('atlas-q5')?.value || '(Niet ingevuld)';
-            const a6 = document.getElementById('atlas-q6')?.value || '(Niet ingevuld)';
-            const a7 = document.getElementById('atlas-q7')?.value || '(Niet ingevuld)';
-            const a8 = document.getElementById('atlas-q8')?.value || '(Niet ingevuld)';
-            const a9 = document.getElementById('atlas-q9')?.value || '(Niet ingevuld)';
-
-            const scaleVal = document.getElementById('calc-scale-val')?.value || '40000';
-            const cmVal = document.getElementById('calc-cm-val')?.value || '5';
-            const kmOutput = document.getElementById('calc-output-km')?.innerText || '2 km';
-
-            let jsPDFClass = null;
-            if (window.jspdf && window.jspdf.jsPDF) {
-                jsPDFClass = window.jspdf.jsPDF;
-            } else if (window.jsPDF) {
-                jsPDFClass = window.jsPDF;
-            }
-
-            if (!jsPDFClass) {
-                alert("Het PDF-bibliotheekje kon niet geladen worden. Controleer je internetverbinding of schakel adblockers uit.");
-                return;
-            }
-
-            const doc = new jsPDFClass();
-
-            // Header Title
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
-            doc.setTextColor(15, 23, 42);
-            doc.text('KaartMeester - Resultaten & Antwoordenblad', 14, 18);
-
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(100, 116, 139);
-            doc.text(`Gegenereerd op: ${new Date().toLocaleDateString('nl-NL')} om ${new Date().toLocaleTimeString('nl-NL', {hour: '2-digit', minute:'2-digit'})}`, 14, 24);
-
-            // Student Info Box
-            doc.setDrawColor(203, 213, 225);
-            doc.setFillColor(248, 250, 252);
-            doc.roundedRect(14, 28, 182, 18, 2, 2, 'FD');
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(10.5);
-            doc.setTextColor(30, 41, 59);
-            doc.text(`Leerling: ${name}`, 18, 36);
-            doc.text(`Klas: ${studentClass}`, 90, 36);
-            doc.text(`Quiz Score: ${score} / 60 ptn`, 145, 36);
-
-            let y = 54;
-
-            const checkNewPage = (neededHeight) => {
-                if (y + neededHeight > 275) {
-                    doc.addPage();
-                    y = 20;
+                const name = getVal("pdf-student-name", "Leerling");
+                let studentClass = getVal("pdf-student-class", "");
+                if (!studentClass || studentClass === "Onbekend" || studentClass === "(Niet ingevuld)") {
+                    studentClass = "Brugklas";
                 }
-            };
 
-            const addSectionHeader = (titleText, colorRgb = [6, 182, 212]) => {
-                checkNewPage(12);
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(12);
-                doc.setTextColor(colorRgb[0], colorRgb[1], colorRgb[2]);
-                doc.text(titleText, 14, y);
-                y += 6;
-            };
+                const now = new Date().toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" });
+                const p1 = getVal("compare-student-patroon", "(Geen antwoord ingevuld)");
+                const p2 = getVal("compare-student-verband", "(Geen antwoord ingevuld)");
+                const p3 = getVal("compare-student-verklaring", "(Geen antwoord ingevuld)");
 
-            const addQa = (qText, aText) => {
-                const splitQ = doc.splitTextToSize(qText, 180);
-                const splitA = doc.splitTextToSize(`Antwoord: ${aText}`, 180);
-                const needed = (splitQ.length + splitA.length) * 4.5 + 4;
-                checkNewPage(needed);
+                const scaleVal = getVal("calc-scale-val", "40000");
+                const cmVal = getVal("calc-cm-val", "5");
+                const kmElem = document.getElementById("calc-output-km");
+                const kmOutput = kmElem ? kmElem.innerText.trim() : "2.0 km";
 
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(9.5);
-                doc.setTextColor(51, 65, 85);
-                doc.text(splitQ, 14, y);
-                y += splitQ.length * 4.5;
+                const a1 = getVal("atlas-q1", "(Niet ingevuld)");
+                const a2 = getVal("atlas-q2", "(Geen keuze)");
+                const a3 = getVal("atlas-q3", "(Niet ingevuld)");
+                const a4 = getVal("atlas-q4", "(Geen keuze)");
+                const a5 = getVal("atlas-q5", "(Niet ingevuld)");
+                const a6 = getVal("atlas-q6", "(Geen keuze)");
+                const a7 = getVal("atlas-q7", "(Niet ingevuld)");
+                const a8 = getVal("atlas-q8", "(Geen keuze)");
+                const a9 = getVal("atlas-q9", "(Geen keuze)");
 
-                doc.setFont('helvetica', 'italic');
-                doc.setFontSize(9.5);
-                doc.setTextColor(15, 118, 110);
-                doc.text(splitA, 14, y);
-                y += splitA.length * 4.5 + 3;
-            };
+                // Populate in-page print sheet
+                                                                                                                                                                
+                if (window.jspdf && window.jspdf.jsPDF) {
+                    try {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+                        let y = 18;
 
-            // 1. Verbanden-Legger
-            addSectionHeader('1. Verbanden-Legger (B20 Canada Analyse)', [6, 182, 212]);
-            addQa('Stap 1: Patroon Herkennen (Bevolking Canada)', p1);
-            addQa('Stap 2: Verband Leggen (Klimaat vs Bevolking)', p2);
-            addQa('Stap 3: Verklaring (Waarom wonen mensen daar?)', p3);
+                        doc.setFillColor(15, 23, 42);
+                        doc.rect(0, 0, 210, 25, "F");
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFontSize(16);
+                        doc.setFont("helvetica", "bold");
+                        doc.text("KaartMeester - Resultaten & Antwoordenblad", 14, 12);
 
-            y += 2;
+                        doc.setFontSize(9);
+                        doc.setFont("helvetica", "normal");
+                        doc.text(`Datum: ${now}`, 14, 19);
 
-            // 2. Schaal-Rekenmachine
-            addSectionHeader('2. Virtuele Schaal-Rekenmachine (B15)', [245, 158, 11]);
-            addQa('Berekende Kaartafstand:', `Schaal 1:${scaleVal} | Gemeten: ${cmVal} cm -> Werkelijkheid: ${kmOutput}`);
+                        doc.setFillColor(241, 245, 249);
+                        doc.roundedRect(14, 28, 182, 14, 2, 2, "F");
+                        doc.setTextColor(30, 41, 59);
+                        doc.setFontSize(10);
+                        doc.setFont("helvetica", "bold");
+                        doc.text(`Leerling: ${name}`, 18, 36);
+                        doc.text(`Klas: ${studentClass}`, 90, 36);
+                        doc.text(`Quiz Score: ${typeof currentScore !== "undefined" ? currentScore : 0} / 60 ptn`, 150, 36);
 
-            y += 2;
+                        y = 50;
 
-            // 3. Bosatlas Alcarta
-            addSectionHeader('3. Praktijkopdracht Online Bosatlas Alcarta', [16, 185, 129]);
-            addQa('Kaart 84A (Madrid): Brandstof & Soort kaart', `${a1} | Soort: ${a2}`);
-            addQa('Kaart 74A (Rome): Vak & Soort kaart', `${a3} | Soort: ${a4}`);
-            addQa('Kaart 72A (Minsk): Land & Soort kaart', `${a5} | Soort: ${a6}`);
-            addQa('Kaart 155B (Kathmandu): Titel, risico & soort', `Titel: ${a7} | Risico: ${a8} | Soort: ${a9}`);
+                        const checkNewPage = (neededHeight) => {
+                            if (y + neededHeight > 275) {
+                                doc.addPage();
+                                y = 15;
+                            }
+                        };
 
-            // Footer
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                doc.setTextColor(148, 163, 184);
-                doc.text(`Gegenereerd door KaartMeester - Pagina ${i} van ${pageCount}`, 14, 287);
+                        const addSectionHeader = (titleText, colorRgb) => {
+                            checkNewPage(12);
+                            doc.setFont("helvetica", "bold");
+                            doc.setFontSize(12);
+                            doc.setTextColor(colorRgb[0], colorRgb[1], colorRgb[2]);
+                            doc.text(titleText, 14, y);
+                            y += 6;
+                        };
+
+                        const addQa = (qText, aText) => {
+                            const splitQ = doc.splitTextToSize(qText, 180);
+                            const splitA = doc.splitTextToSize(`Antwoord: ${aText}`, 180);
+                            const needed = (splitQ.length + splitA.length) * 4.5 + 4;
+                            checkNewPage(needed);
+
+                            doc.setFont("helvetica", "bold");
+                            doc.setFontSize(9.5);
+                            doc.setTextColor(51, 65, 85);
+                            doc.text(splitQ, 14, y);
+                            y += splitQ.length * 4.5;
+
+                            doc.setFont("helvetica", "italic");
+                            doc.setFontSize(9.5);
+                            doc.setTextColor(15, 118, 110);
+                            doc.text(splitA, 14, y);
+                            y += splitA.length * 4.5 + 3;
+                        };
+
+                        addSectionHeader("1. Verbanden-Legger (B20 Canada Analyse)", [6, 182, 212]);
+                        addQa("Stap 1: Patroon Herkennen (Bevolking Canada)", p1);
+                        addQa("Stap 2: Verband Leggen (Klimaat vs Bevolking)", p2);
+                        addQa("Stap 3: Verklaring (Waarom wonen mensen daar?)", p3);
+
+                        y += 2;
+                        addSectionHeader("2. Virtuele Schaal-Rekenmachine (B15)", [245, 158, 11]);
+                        addQa("Berekende Kaartafstand:", `Schaal 1:${scaleVal} | Gemeten: ${cmVal} cm -> Werkelijkheid: ${kmOutput}`);
+
+                        y += 2;
+                        addSectionHeader("3. Praktijkopdracht Online Bosatlas Alcarta", [16, 185, 129]);
+                        addQa("Kaart 84A (Madrid): Brandstof & Soort kaart", `${a1} | Soort: ${a2}`);
+                        addQa("Kaart 74A (Rome): Vak & Soort kaart", `${a3} | Soort: ${a4}`);
+                        addQa("Kaart 72A (Minsk): Land & Soort kaart", `${a5} | Soort: ${a6}`);
+                        addQa("Kaart 155B (Kathmandu): Titel, risico & soort", `Titel: ${a7} | Risico: ${a8} | Soort: ${a9}`);
+
+                        const pageCount = doc.internal.getNumberOfPages();
+                        for (let i = 1; i <= pageCount; i++) {
+                            doc.setPage(i);
+                            doc.setFontSize(8);
+                            doc.setFont("helvetica", "normal");
+                            doc.setTextColor(148, 163, 184);
+                            doc.text(`Gegenereerd door KaartMeester - Pagina ${i} van ${pageCount}`, 14, 287);
+                        }
+
+                        const fileName = `KaartMeester_Resultaten_${name.replace(/\s+/g, "_")}_${studentClass.replace(/\s+/g, "_")}.pdf`;
+                        doc.save(fileName);
+                        closePdfModal();
+                        return;
+                    } catch (e) {
+                        console.warn("jsPDF error, falling back to window.print():", e);
+                    }
+                }
+
+                closePdfModal();
+                window.print();
+            } catch(err) {
+                alert("Er is een fout opgetreden bij het genereren: " + err.message);
             }
-
-            const fileName = `KaartMeester_Resultaten_${name.replace(/\s+/g, '_')}_${studentClass.replace(/\s+/g, '_')}.pdf`;
-            doc.save(fileName);
-            closePdfModal();
         }
 
-        // INITIALIZE ON LOAD
-        window.addEventListener('DOMContentLoaded', () => {
-            calculateScale();
-            loadQuestion();
-        });
-    </script>
+// INITIALIZE ON LOAD
+window.addEventListener('DOMContentLoaded', () => {
+    switchTab('theorie');
+    calculateScale();
+    loadQuestion();
+});
+</script>
+
 </body>
 </html>
